@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Upload Garbage Report</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            margin: 0; padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        header {
+            background: #2e70c9;
+            padding: 1rem 2rem;
+            width: 100%;
+            color: white;
+            font-weight: 700;
+            font-size: 1.5rem;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+        }
+        .container {
+            background: white;
+            margin-top: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            padding: 2rem;
+            width: 400px;
+        }
+        h2 {
+            margin-top: 0;
+            text-align: center;
+            color: #325288;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            font-weight: 600;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+            color: #3a3a3a;
+        }
+        input[type="file"] {
+            font-size: 1rem;
+        }
+        button {
+            margin-top: 2rem;
+            padding: 0.7rem;
+            background: #2e70c9;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:disabled {
+            background-color: #9bbbe8;
+            cursor: not-allowed;
+        }
+        button:hover:not(:disabled) {
+            background-color: #244f8d;
+        }
+        .messages {
+            margin-top: 1rem;
+            font-size: 0.95rem;
+        }
+        .messages .error {
+            color: red;
+        }
+        .messages .success {
+            color: green;
+        }
+        .logout-link {
+            margin-top: 1.5rem;
+            text-align: center;
+        }
+        .logout-link a {
+            color: #244f8d;
+            text-decoration: none;
+            font-weight: 700;
+        }
+        .notification {
+            background-color: #ffecb3;
+            border: 1px solid #f0d26a;
+            padding: 1rem;
+            margin: 0.7rem 0;
+            border-radius: 5px;
+            position: relative;
+        }
+        .notification button {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            background: transparent;
+            border: none;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            color: #ac7b00;
+        }
+    </style>
+</head>
+<body>
+    <header>Garbage Reporting System - Upload Report</header>
+    <div class="container">
+        {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    <p class="{{ message.tags }}">{{ message }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% for report in removed_reports %}
+        <div class="notification" id="notif-{{ report.id }}">
+            <p>Your report #{{ report.id }} has been removed by admin.</p>
+            <button onclick="acknowledge('{{ report.id }}')" title="Dismiss notification">&times;</button>
+        </div>
+        {% endfor %}
+
+        <form method="POST" enctype="multipart/form-data" id="reportForm">
+            {% csrf_token %}
+            {{ form.as_p }}
+
+            <input type="hidden" name="latitude" id="latitude" />
+            <input type="hidden" name="longitude" id="longitude" />
+
+            <button type="submit" disabled id="submitBtn">Submit Report</button>
+        </form>
+
+        <div class="logout-link">
+            <form action="{% url 'logout' %}" method="post" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" style="background:none; border:none; padding:0; cursor:pointer; color:#244f8d; font-weight:bold;">
+                    Logout
+                </button>
+            </form>
+        </div>
+        
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        const submitBtn = document.getElementById('submitBtn');
+
+        // AJAX setup for CSRF token
+        $.ajax({
+            url: "/some-url/",
+            type: "POST",
+            beforeSend: function(xhr, settings) {
+                if (!(settings.url.startsWith('http:') || settings.url.startsWith('https:'))) {
+                    xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+                }
+            },
+            success: function(response) {
+                // handle success
+            }
+        });
+
+        function enableSubmit() {
+            submitBtn.disabled = false;
+        }
+
+        function disableSubmit() {
+            submitBtn.disabled = true;
+        }
+
+        function acknowledge(reportId) {
+            fetch(`/acknowledge/${reportId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.success) {
+                    const notif = document.getElementById('notif-' + reportId);
+                    if (notif) {
+                        notif.remove();
+                    }
+                } else {
+                    console.error('Acknowledgment failed:', data);
+                }
+            })
+            .catch(error => console.error('Error:', error)); // Log any errors
+        }
+
+        // CSRF cookie retrieval helper
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let cookie of cookies) {
+                    cookie = cookie.trim();
+                    if (cookie.startsWith(name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+    return cookieValue;
+}
+
+        // Location fetching
+        const reportForm = document.getElementById('reportForm');
+        const latInput = document.getElementById('latitude');
+        const lonInput = document.getElementById('longitude');
+
+        function setLocation(position) {
+            latInput.value = position.coords.latitude.toFixed(6);
+            lonInput.value = position.coords.longitude.toFixed(6);
+            enableSubmit();
+        }
+
+        function showLocationError() {
+            alert("Unable to get your current location. Please allow location access.");
+            disableSubmit();
+        }
+
+        function initLocation() {
+            if(navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(setLocation, showLocationError);
+            } else {
+                alert("Geolocation is not supported by your browser.");
+                disableSubmit();
+            }
+        }
+
+        window.onload = function() {
+            initLocation();
+        }
+    </script>
+</body>
+</html>

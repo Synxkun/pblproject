@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login - Garbage Reporting System</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #6b8de3, #5ab4ba);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .login-container {
+            background-color: white;
+            padding: 2rem 3rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+            width: 360px;
+        }
+        h2 {
+            margin-bottom: 1.5rem;
+            text-align: center;
+            color: #325288;
+        }
+        label {
+            display: block;
+            margin-top: 1rem;
+            font-weight: 600;
+            color: #325288;
+        }
+        input[type=text], input[type=password] {
+            width: 100%;
+            padding: 0.5rem;
+            margin-top: 0.3rem;
+            border: 1px solid #bbb;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+        button {
+            margin-top: 1.5rem;
+            width: 100%;
+            background-color: #2e70c9;
+            color: white;
+            border: none;
+            padding: 0.7rem;
+            border-radius: 5px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #244f8d;
+        }
+        .errorlist {
+            padding: 0;
+            color: red;
+            font-size: 0.9rem;
+            margin-top: 0.3rem;
+            list-style-type: none;
+        }
+        .help-text {
+            font-size: 0.85rem;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h2>Garbage System Login</h2>
+        {% if form.errors %}
+        <p style="color:red; font-weight:bold;">
+            Please correct the error{{ form.errors|length|yesno:',s' }} below.
+        </p>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+            <label for="id_username">Username:</label>
+            {{ form.username }}
+            <label for="id_password">Password:</label>
+            {{ form.password }}
+
+            <button type="submit">Login</button>
+        </form>
+    </div>
+</body>
+</html>

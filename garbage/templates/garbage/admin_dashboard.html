@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Admin Dashboard - Garbage System</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f9fafb;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #2e70c9;
+            padding: 1rem 2rem;
+            color: white;
+            font-weight: 700;
+            font-size: 1.5rem;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logout-link a {
+            color: #d9e9ff;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            border: 1px solid #d9e9ff;
+            padding: 0.3rem 0.7rem;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+        .logout-link a:hover {
+            background-color: #d9e9ff;
+            color: #2e70c9;
+        }
+
+        .container {
+            margin: 2rem auto;
+            width: 90%;
+            max-width: 960px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.12);
+            padding: 1.5rem 2rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+        thead tr {
+            background-color: #2e70c9;
+            color: white;
+            text-align: left;
+        }
+        th, td {
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid #e6e6e6;
+        }
+        tbody tr:nth-child(odd) {
+            background-color: #f6f9fc;
+        }
+        button.remove {
+            background-color: #d9534f;
+            color: white;
+            border: none;
+            padding: 0.4rem 0.8rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button.remove:hover {
+            background-color: #c9302c;
+        }
+        img.report-image {
+            max-height: 60px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        .status-removed {
+            color: #d9534f;
+            font-weight: 600;
+        }
+        .status-active {
+            color: #5cb85c;
+            font-weight: 600;
+        }
+        .messages {
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+        }
+        .messages .success {
+            color: green;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div>Admin Dashboard - Garbage Reports</div>
+        <div class="logout-link">
+            <a href="{% url 'login' %}">Logout</a>
+        </div>
+    </header>
+    <div class="container">
+
+        {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    <p class="{{ message.tags }}">{{ message }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>User</th>
+                    <th>Image</th>
+                    <th>Latitude</th>
+                    <th>Longitude</th>
+                    <th>Status</th>
+                    <th>Uploaded At</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for report in reports %}
+                <tr>
+                    <td>{{ report.id }}</td>
+                    <td>{{ report.user.username }}</td>
+                    <td>
+                        {% if report.image %}
+                            <img src="{{ report.image.url }}" alt="Report Image" class="report-image" />
+                        {% else %}
+                            No Image
+                        {% endif %}
+                    </td>
+                    <td>{{ report.latitude }}</td>
+                    <td>{{ report.longitude }}</td>
+                    <td class="status-{{ report.status }}">
+                        {{ report.get_status_display }}
+                    </td>
+                    <td>{{ report.created_at|date:"Y-m-d H:i" }}</td>
+                    <td>
+                        {% if report.status == 'active' %}
+                        <form method="POST" action="{% url 'garbage:remove_report' report.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="remove" onclick="return confirm('Are you sure to remove this report?');">Remove</button>
+                        </form>
+                        {% else %}
+                            Removed
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="8" style="text-align: center;">No reports found yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
